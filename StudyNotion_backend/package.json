@@ -1,20 +1,26 @@
 {
-  "dependencies": {
-    "cookie-parser": "^1.4.7",
-    "express": "^5.1.0",
-    "init": "^0.1.2",
-    "mongoose": "^8.18.2",
-    "nodemon": "^3.1.10"
-  },
-  "name": "studynotion_backend",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "devDependencies": {}
+    "dependencies": {
+        "bcrypt": "^6.0.0",
+        "cookie-parser": "^1.4.7",
+        "crypto": "^1.0.1",
+        "dotenv": "^17.2.2",
+        "express": "^5.1.0",
+        "init": "^0.1.2",
+        "jsonwebtoken": "^9.0.2",
+        "mongoose": "^8.18.2",
+        "nodemailer": "^7.0.6",
+        "nodemon": "^3.1.10",
+        "otp-generator": "^4.0.1"
+    },
+    "name": "studynotion_backend",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "start": "node index.js",
+        "dev": "nodemon index.js"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC"
 }
