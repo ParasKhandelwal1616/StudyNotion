@@ -14,9 +14,9 @@ const tagSchema = new mongoose.Schema({
         trim: true
     },
     Courses: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Courses',
-        required: true
+        //array of course IDs associated with this tag
+        type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Course' }],
+        default: []
     }
 
 });
