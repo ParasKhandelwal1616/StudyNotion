@@ -2,12 +2,12 @@ const Section = require("../models/section");
 const SubSection = require("../models/subsection");
 const { uploadImageToCloudinary } = require("../utils/imageUploder.js");
 
-exports.createSubSection = async (req, res) => {
+exports.createSubSection = async(req, res) => {
     try {
-        const { sectionId, title, description } = req.body;
+        const { sectionId, title, timeDuration, description } = req.body;
         const video = req.files.video;
 
-        if (!sectionId || !title || !description || !video) {
+        if (!sectionId || !title || timeDuration || !description || !video) {
             return res.status(400).json({ success: false, message: "All fields are required" });
         }
 
@@ -18,15 +18,13 @@ exports.createSubSection = async (req, res) => {
 
         const subSectionDetails = await SubSection.create({
             title: title,
-            timeDuration: `${uploadDetails.duration}`,
+            timeDuration: timeDuration,
             description: description,
             videosUrl: uploadDetails.secure_url,
         });
 
         const updatedSection = await Section.findByIdAndUpdate(
-            sectionId,
-            { $push: { subsections: subSectionDetails._id } },
-            { new: true }
+            sectionId, { $push: { subsections: subSectionDetails._id } }, { new: true }
         ).populate("subsections");
 
         return res.status(200).json({ success: true, data: updatedSection });
@@ -39,9 +37,9 @@ exports.createSubSection = async (req, res) => {
     }
 };
 
-exports.updateSubSection = async (req, res) => {
+exports.updateSubSection = async(req, res) => {
     try {
-        const { subSectionId, sectionId, title, description } = req.body;
+        const { subSectionId, sectionId, timeDuration, title, description } = req.body;
         const subSection = await SubSection.findById(subSectionId);
 
         if (!subSection) {
@@ -65,7 +63,7 @@ exports.updateSubSection = async (req, res) => {
                 process.env.FOLDER_NAME
             );
             subSection.videosUrl = uploadDetails.secure_url;
-            subSection.timeDuration = `${uploadDetails.duration}`;
+            subSection.timeDuration = timeDuration;
         }
 
         await subSection.save();
@@ -86,12 +84,11 @@ exports.updateSubSection = async (req, res) => {
     }
 };
 
-exports.deleteSubSection = async (req, res) => {
+exports.deleteSubSection = async(req, res) => {
     try {
         const { subSectionId, sectionId } = req.body;
         await Section.findByIdAndUpdate(
-            sectionId,
-            {
+            sectionId, {
                 $pull: {
                     subsections: subSectionId,
                 },
