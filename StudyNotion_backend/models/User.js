@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { resetPassword } = require('../controllers/ResetPassword');
 const userSchema = new mongoose.Schema({
     firstname: {
         type: String,
@@ -42,6 +43,12 @@ const userSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'CourseProgress',
     }],
+    token: {
+        type: String,
+    },
+    resetPasswordExpires: {
+        type: Date,
+    },
 });
 
 const User = mongoose.model('User', userSchema);
