@@ -1,6 +1,6 @@
 import User from "../models/User";
 import Courses from "../models/Courses.js";
-import Tag from "../models/tags.js";
+import Category from "../models/categories.js";
 import { cloudinaryUploder } from "../utils/imageUploder.js";
 
 // Create a new course
@@ -12,11 +12,11 @@ exports.createCourse = async(req, res) => {
             whatYouwilllearn,
             courseContent,
             coursePrice,
-            tag
+            category
         } = req.body;
 
         // Validate required fields
-        if (!courseName || !courseDescription || !whatYouwilllearn || !courseContent || !coursePrice || !tag) {
+        if (!courseName || !courseDescription || !whatYouwilllearn || !courseContent || !coursePrice || !category) {
             return res.status(400).json({ message: "All fields are required" });
         }
         // get thumbnail from req.files
@@ -29,18 +29,32 @@ exports.createCourse = async(req, res) => {
         if (!instructorExists) {
             return res.status(404).json({ message: "Instructor not found" });
         }
+        // category velidation 
+        const categoryDetails = await Category.findById(category);
+        if (!categoryDetails) {
+            return res.status(404).json({ message: "Category not found" });
+        }
+
+        // upload thumbnail to cloudinary
+        const thumbnailImage = await cloudinaryUploder(thumbnail, "StudyNotion/Courses/thumbnail");
 
         // Create course in db
         const courseDetails = await Courses.create({
             courseName: courseName,
             courseDescription: courseDescription,
-            instractor: instractor,
+            instractor: instructorExists._id,
             whatYouwilllearn: whatYouwilllearn,
             courseContent: courseContent,
             coursePrice: coursePrice,
-            thumbnail: thumbnail,
-            tag: tag
+            thumbnail: thumbnailImage.secure_url,
+            category: category
         });
+
+        // update user with course
+        await User.findByIdAndUpdate({ _id: instructorExists._id }, { $push: { courses: courseDetails._id } }, { new: true });
+
+        // update category with course
+        await Category.findByIdAndUpdate({ _id: categoryDetails._id }, { $push: { Courses: courseDetails._id } }, { new: true });
 
         console.log("Course created successfully:", courseDetails);
         return res.status(201).json({ message: "Course created successfully", course: courseDetails });
