@@ -1,43 +1,44 @@
-import ratingandreviewService from "../models/RatingandReview.js";
-const course = require("../models/Courses.js");
-const user = require("../models/User.js");
+const mongoose = require("mongoose");
+const RatingAndReview = require("../models/ratingandreview.js");
+const Course = require("../models/Courses.js");
+const User = require("../models/User.js");
 
 
-// create reating 
-exports.createrating = async(req, res) => {
+// create rating 
+exports.createRating = async(req, res) => {
     try {
         const { rating, review } = req.body;
         const userID = req.user.id;
         const { courseId } = req.body;
         // validation of user is enrolled or not
-        const courseDetails = await course.findById(courseId);
-        const userid = userID;
-        if (!courseDetails.enrolledStudents.includes(userid)) {
+        const courseDetails = await Course.findById(courseId);
+
+        if (!courseDetails.enrolledStudents.includes(userID)) {
             return res.status(400).json({
                 success: false,
                 message: "user is not enrolled in this course"
             })
         }
-        // check the user is already reviewd the course
-        const alreadyReviewd = await ratingandreviewService.findOne({
+        // check the user is already reviewed the course
+        const alreadyReviewed = await RatingAndReview.findOne({
             course: courseId,
             user: userID,
         });
-        if (alreadyReviewd) {
+        if (alreadyReviewed) {
             return res.status(400).json({
                 success: false,
-                message: "user has already reviewd this course"
+                message: "user has already reviewed this course"
             })
         }
         // create rating and review
-        const newRatingAndReview = await ratingandreviewService.create({
+        const newRatingAndReview = await RatingAndReview.create({
             rating,
             review,
             user: userID,
             course: courseId,
         });
         // update course with rating and review
-        await course.findByIdAndUpdate({ _id: courseId }, { $push: { ratingAndReview: newRatingAndReview._id } }, { new: true });
+        await Course.findByIdAndUpdate({ _id: courseId }, { $push: { ratingsAndReviews: newRatingAndReview._id } }, { new: true });
         return res.status(201).json({
             success: true,
             message: "rating and review created successfully",
@@ -53,11 +54,11 @@ exports.createrating = async(req, res) => {
     }
 };
 
-//get all reating and review for a course
+//get all rating and review for a course
 exports.getAllRatingAndReview = async(req, res) => {
     try {
         const { courseId } = req.params;
-        const allRatingAndReview = await ratingandreviewService.find({ course: courseId }).populate("user", "firstName lastName email image");
+        const allRatingAndReview = await RatingAndReview.find({ course: courseId }).populate("user", "firstName lastName email image");
         return res.status(200).json({
             success: true,
             message: "all rating and review fetched successfully",
@@ -74,11 +75,11 @@ exports.getAllRatingAndReview = async(req, res) => {
 
 
 
-//get average reating for a course
+//get average rating for a course
 exports.getAverageRating = async(req, res) => {
     try {
         const { courseId } = req.params;
-        const result = await ratingandreviewService.aggregate([
+        const result = await RatingAndReview.aggregate([
             { $match: { course: new mongoose.Types.ObjectId(courseId) } },
             {
                 $group: {

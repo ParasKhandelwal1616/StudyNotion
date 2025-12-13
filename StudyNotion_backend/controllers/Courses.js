@@ -1,7 +1,7 @@
-import User from "../models/User";
-import Courses from "../models/Courses.js";
-import Category from "../models/categories.js";
-import { cloudinaryUploder } from "../utils/imageUploder.js";
+const User = require("../models/User.js");
+const Courses = require("../models/Courses.js");
+const Category = require("../models/categories.js");
+const { cloudinaryUploder } = require("../utils/imageUploder.js");
 
 // Create a new course
 exports.createCourse = async(req, res) => {
@@ -23,13 +23,13 @@ exports.createCourse = async(req, res) => {
         const thumbnail = req.files.thumbnailImage;
 
 
-        // Check if instractor exists
+        // Check if instructor exists
         const userID = req.user.id;
         const instructorExists = await User.findById(userID);
         if (!instructorExists) {
             return res.status(404).json({ message: "Instructor not found" });
         }
-        // category velidation 
+        // category validation 
         const categoryDetails = await Category.findById(category);
         if (!categoryDetails) {
             return res.status(404).json({ message: "Category not found" });
@@ -42,7 +42,7 @@ exports.createCourse = async(req, res) => {
         const courseDetails = await Courses.create({
             courseName: courseName,
             courseDescription: courseDescription,
-            instractor: instructorExists._id,
+            instructor: instructorExists._id,
             whatYouwilllearn: whatYouwilllearn,
             courseContent: courseContent,
             coursePrice: coursePrice,
@@ -51,10 +51,7 @@ exports.createCourse = async(req, res) => {
         });
 
         // update user with course
-        await User.findByIdAndUpdate({ _id: instructorExists._id }, { $push: { courses: courseDetails._id } }, { new: true });
-
-        // update category with course
-        await Category.findByIdAndUpdate({ _id: categoryDetails._id }, { $push: { Courses: courseDetails._id } }, { new: true });
+        await User.findByIdAndUpdate({ _id: instructorExists._id }, { $push: { createdCourses: courseDetails._id } }, { new: true });
 
         console.log("Course created successfully:", courseDetails);
         return res.status(201).json({ message: "Course created successfully", course: courseDetails });
@@ -86,7 +83,7 @@ exports.getCourseDetails = async(req, res) => {
                 select: "categoryName"
             })
             .populate({
-                path: "instractor",
+                path: "instructor",
                 populate: { path: "additionalDetails" },
                 select: "firstName lastName email"
             })
@@ -106,7 +103,7 @@ exports.getCourseDetails = async(req, res) => {
                 path: "enrolledStudents",
                 select: "firstName lastName email"
             });
-        //velidation for courseDetails
+        //validation for courseDetails
         if (!courseDetails) {
             return res.status(404).json({ message: "Course not found" });
         }

@@ -2,8 +2,8 @@
 const User = require("../models/User");
 const OTP = require("../models/OTP");
 const otpGenerator = require("otp-generator");
-const bycrypt = require("bcrypt");
-const Profile = require("../models/Profile");
+const bcrypt = require("bcrypt");
+const Profile = require("../models/profile");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
@@ -14,24 +14,24 @@ exports.sendOTP = async(req, res) => {
         const { email } = req.body;
 
         // Check if user already exists
-        const checkuserpresent = await User.findOne({ email });
-        if (checkuserpresent) {
+        const checkUserPresent = await User.findOne({ email });
+        if (checkUserPresent) {
             return res.status(400).json({ message: "User already exists" });
         }
 
-        //genereteOTP function
-        var otp = otpGenerator(6, {
+        //generateOTP function
+        var otp = otpGenerator.generate(6, {
             upperCaseAlphabets: false,
             specialChars: false,
             lowerCaseAlphabets: false,
         });
         console.log(otp);
 
-        //check uniqe otp or not
-        const existingOTP = await OTP.findOne({ otp: otp });
+        //check unique otp or not
+        let existingOTP = await OTP.findOne({ otp: otp });
 
         while (existingOTP) {
-            otp = otpGenerator(6, {
+            otp = otpGenerator.generate(6, {
                 upperCaseAlphabets: false,
                 specialChars: false,
                 lowerCaseAlphabets: false,
@@ -56,16 +56,16 @@ exports.sendOTP = async(req, res) => {
 
 exports.signup = async(req, res) => {
     try {
-        const { firstName, lastName, email, password, confermpassword, contactNumber, otp } = req.body;
+        const { firstName, lastName, email, password, confirmPassword, contactNumber, otp, accountType } = req.body;
         //validation on fields
-        if (!firstName || !lastName || !email || !password || !confermpassword || !contactNumber || !otp) {
+        if (!firstName || !lastName || !email || !password || !confirmPassword || !contactNumber || !otp || !accountType) {
             return res.status(400).json({ message: "All fields are required" });
         }
         //2 password match password and conform password
         if (password.length < 6) {
             return res.status(400).json({ message: "Password must be at least 6 characters long" });
         }
-        if (password !== confermpassword) {
+        if (password !== confirmPassword) {
             return res.status(400).json({ message: "Passwords do not match" });
         }
         // Check if user already exists
@@ -83,17 +83,15 @@ exports.signup = async(req, res) => {
             return res.status(400).json({ message: "Invalid OTP" });
         }
         // hash password
-        const hashedPassword = await bycrypt.hash(password, 10);
+        const hashedPassword = await bcrypt.hash(password, 10);
 
         //entry create in profile
-        const userProfile = {
+        const userProfile = await Profile.create({
             gender: null,
             dob: null,
             about: null,
-            userEmail: email,
             contactNumber: contactNumber,
-        };
-        await Profile.create(userProfile);
+        });
 
         // Create new user
         const user = await User.create({
@@ -101,10 +99,9 @@ exports.signup = async(req, res) => {
             lastName,
             email,
             password: hashedPassword,
-            contactNumber,
             accountType,
-            additionDetails: userProfile._id,
-            Image: `https://api.dicebear.com/6.x/initials/svg?seed=${firstName}+${lastName}`,
+            additionalDetails: userProfile._id,
+            image: `https://api.dicebear.com/6.x/initials/svg?seed=${firstName}+${lastName}`,
         });
 
         return res.status(201).json({ message: "User registered successfully", user });
@@ -117,7 +114,7 @@ exports.signup = async(req, res) => {
 
 //login
 
-exports.Login = async(req, res) => {
+exports.login = async(req, res) => {
     try {
         const { email, password } = req.body;
 
@@ -127,7 +124,7 @@ exports.Login = async(req, res) => {
         }
 
         // Check if user exists
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email }).populate("additionalDetails");
         if (!user) {
             return res.status(400).json({ message: "User does not exist" });
         }
@@ -153,8 +150,6 @@ exports.Login = async(req, res) => {
         };
 
         res.cookie("token", token, options).status(200).json({ message: "Login successful", user, token });
-
-        return res.status(200).json({ message: "Login successful", user, token });
 
     } catch (error) {
         console.error("Error in login:", error);
@@ -196,8 +191,6 @@ exports.changePassword = async(req, res) => {
         await user.save();
 
         return res.status(200).json({ message: "Password changed successfully" });
-
-        res.status(200).json({ message: "Password changed successfully" });
 
     } catch (error) {
         console.error("Error in changePassword:", error);

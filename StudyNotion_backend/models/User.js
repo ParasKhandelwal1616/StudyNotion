@@ -1,12 +1,12 @@
 const mongoose = require('mongoose');
-const { resetPassword } = require('../controllers/ResetPassword');
+
 const userSchema = new mongoose.Schema({
-    firstname: {
+    firstName: {
         type: String,
         required: true,
         trim: true,
     },
-    lastname: {
+    lastName: {
         type: String,
         required: true,
         trim: true,
@@ -26,12 +26,16 @@ const userSchema = new mongoose.Schema({
         enum: ['student', 'instructor', 'admin'],
         required: true,
     },
-    additionDetails: {
+    additionalDetails: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'profile',
         required: true,
     },
-    Courses: [{
+    purchasedCourses: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Course',
+    }],
+    createdCourses: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Course',
     }],

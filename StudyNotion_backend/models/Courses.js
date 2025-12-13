@@ -11,7 +11,7 @@ const CoursesSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
-    instractor: {
+    instructor: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true
@@ -45,7 +45,8 @@ const CoursesSchema = new mongoose.Schema({
         trim: true
     },
     category: [{
-        type: String,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Category',
         required: true,
         trim: true
     }],

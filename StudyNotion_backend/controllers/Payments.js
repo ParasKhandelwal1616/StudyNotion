@@ -1,72 +1,71 @@
-const { default: mongoose } = require("mongoose");
-const { instance } = require("..//config/razorpay");
-const Course = require("..//models/Courses");
-const User = require("..//models/User");
-const mailsender = require("..//utils/mailsender");
-const { default: orders } = require("razorpay/dist/types/orders");
-
+const mongoose = require("mongoose");
+const crypto = require("crypto");
+const { instance } = require("../config/razorpay");
+const Course = require("../models/Courses");
+const User = require("../models/User");
+const mailsender = require("../utils/mailsender");
 
 //capture the payment
-
 exports.paymentcapture = async(req, res) => {
     try {
         //get course id 
-        const { courseId } = req.body
+        const { courseId } = req.body;
 
         // get userId 
-        const userID = req.User.id
-            //velidation full
+        const userID = req.user.id;
+        //validation full
         if (!userID || !courseId) {
             return res.status(400).json({
                 success: false,
                 message: "user or course not found"
-            })
-        } // get course details
-        const courseDetails = await Course.findById(courseId)
-            //check the user is pershased the course
+            });
+        }
+        // get course details
+        const courseDetails = await Course.findById(courseId);
+        //check the user is purchased the course
 
-        const userid = new mongoose.Types.ObjectId(userID)
+        const userid = new mongoose.Types.ObjectId(userID);
         if (courseDetails.enrolledStudents.includes(userid)) {
             return res.status(400).json({
                 success: false,
-                message: "the user is alreay buy this course",
+                message: "the user has already bought this course",
 
-            })
+            });
         }
-        //creat the object 
+        //create the order
         const amount = courseDetails.coursePrice;
         const currency = "INR";
 
         const options = {
             amount: amount * 100,
             currency,
-            recept: Math.random(Date.now()).toString(),
+            receipt: Math.random(Date.now()).toString(),
             notes: {
                 courseId: courseId,
                 userid,
             }
-        }
+        };
         try {
-            const paymentResponce = await instance.orders.create(options);
-            console.log(paymentResponce);
+            const paymentResponse = await instance.orders.create(options);
+            console.log(paymentResponse);
             return res.status(200).json({
                 success: true,
                 courseName: courseDetails.courseName,
                 courseDescription: courseDetails.courseDescription,
                 thumbnail: courseDetails.thumbnail,
-                orderID: paymentResponce.id,
-                currency: paymentResponce.currency,
-                amount: paymentResponce.amount,
-            })
+                orderID: paymentResponse.id,
+                currency: paymentResponse.currency,
+                amount: paymentResponse.amount,
+            });
         } catch (error) {
-            console.error("Error deleting section:", error);
+            console.error("Error creating razorpay order:", error);
             res.status(500).json({
                 success: false,
                 message: "Internal server error",
             });
         }
     } catch (error) {
-        console.error("Error deleting section:", error);
+        console.error("Error capturing payment:", error);
         res.status(500).json({
             success: false,
             message: "Internal server error",
@@ -74,9 +73,9 @@ exports.paymentcapture = async(req, res) => {
     }
 };
 
-//veriphy signature of razorpay and Server
+//verify signature of razorpay and Server
 exports.verifySignature = async(req, res) => {
-    const webhookSecret = "12345678";
+    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET || "12345678";
     const signature = req.headers["x-razorpay-signature"];
     const shasum = crypto.createHmac("sha256", webhookSecret);
     shasum.update(JSON.stringify(req.body));

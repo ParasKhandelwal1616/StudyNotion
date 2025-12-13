@@ -1,9 +1,8 @@
-import user from '../models/user.js';
-import Courses from '../models/Courses';
+import Courses from '../models/Courses.js';
 import Category from '../models/categories.js';
 
 // Create a new category
-export const createCategories = async(req, res) => {
+export const createCategory = async(req, res) => {
     try {
         const { name, description } = req.body;
         if (!name || !description) {
@@ -25,7 +24,7 @@ export const createCategories = async(req, res) => {
         console.log("Category created successfully:", categorydetails);
         return res.status(201).json({ message: "Category created successfully", category: categorydetails });
     } catch (error) {
-        console.error("Error in createCategories controller:", error);
+        console.error("Error in createCategory controller:", error);
         return res.status(500).json({ message: "Internal Server Error" });
     }
 };
