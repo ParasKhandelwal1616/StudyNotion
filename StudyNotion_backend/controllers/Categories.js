@@ -35,7 +35,7 @@ export const getCategories = async(req, res) => {
     try {
         const categories = await Category.find({});
         return res.status(200).json({ categories: categories });
-    } catch (error) => {
+    } catch (error) {
         console.error("Error in getCategories controller:", error);
         return res.status(500).json({ message: "Internal Server Error" });
     }
@@ -68,6 +68,23 @@ export const updateCategory = async(req, res) => {
         return res.status(200).json({ message: "Category updated successfully", category: updatedCategory });
     } catch (error) {
         console.error("Error in updateCategory controller:", error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+};
+
+// get all courses by category
+export const getCoursesByCategory = async(req, res) => {
+    try {
+        const { categoryId } = req.params;
+        const courses = await Courses.find({ category: categoryId });
+        //validate if courses found
+        if (!courses || courses.length === 0) {
+            return res.status(404).json({ message: "No courses found for this category" });
+        }
+
+        return res.status(200).json({ courses: courses });
+    } catch (error) {
+        console.error("Error in getCoursesByCategory controller:", error);
         return res.status(500).json({ message: "Internal Server Error" });
     }
 };

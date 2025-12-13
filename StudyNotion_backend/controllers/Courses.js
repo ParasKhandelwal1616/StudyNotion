@@ -75,3 +75,44 @@ exports.getCourses = async(req, res) => {
         return res.status(500).json({ message: "Internal Server Error" });
     }
 };
+
+// get coomplete data of course with all details
+exports.getCourseDetails = async(req, res) => {
+    try {
+        const { courseId } = req.body;
+        const courseDetails = await Courses.findById(courseId)
+            .populate({
+                path: "category",
+                select: "categoryName"
+            })
+            .populate({
+                path: "instractor",
+                populate: { path: "additionalDetails" },
+                select: "firstName lastName email"
+            })
+            .populate({
+                path: "courseContent",
+                populate: {
+                    path: "subsections",
+                    select: "title content"
+                },
+                select: "title content"
+            })
+            .populate({
+                path: "ratingsAndReviews",
+                select: "rating reviewBy"
+            })
+            .populate({
+                path: "enrolledStudents",
+                select: "firstName lastName email"
+            });
+        //velidation for courseDetails
+        if (!courseDetails) {
+            return res.status(404).json({ message: "Course not found" });
+        }
+        return res.status(200).json({ courseDetails: courseDetails });
+    } catch (error) {
+        console.error("Error in getCourseDetails controller:", error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+};
