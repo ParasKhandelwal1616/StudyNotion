@@ -55,14 +55,23 @@ exports.createRating = async(req, res) => {
 };
 
 //get all rating and review for a course
-exports.getAllRatingAndReview = async(req, res) => {
+exports.getAllRating = async(req, res) => {
     try {
-        const { courseId } = req.params;
-        const allRatingAndReview = await RatingAndReview.find({ course: courseId }).populate("user", "firstName lastName email image");
-        return res.status(200).json({
+        const allReviews = await RatingAndReview.find({})
+            .sort({ rating: "desc" })
+            .populate({
+                path: "user",
+                select: "firstName lastName email image",
+            })
+            .populate({
+                path: "course",
+                select: "courseName",
+            })
+            .exec()
+        res.status(200).json({
             success: true,
             message: "all rating and review fetched successfully",
-            ratingandreview: allRatingAndReview,
+            data: allReviews,
         })
     } catch (error) {
         return res.status(500).json({

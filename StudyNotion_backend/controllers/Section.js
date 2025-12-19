@@ -62,6 +62,22 @@ exports.updateSection = async(req, res) => {
 
 exports.deleteSection = async(req, res) => {
     try {
+        const { sectionId, courseId } = req.body;
+        await Course.findByIdAndUpdate(courseId, {
+            $pull: {
+                courseContent: sectionId,
+            },
+        })
+        const section = await Section.findById(sectionId);
+        if (!section) {
+            return res.status(404).json({
+                success: false,
+                message: "Section not Found",
+            })
+        }
+
+        //delete sub section
+        await SubSection.deleteMany({ _id: { $in: section.subSection } });
 
         await Section.findByIdAndDelete(sectionId);
 
@@ -70,7 +86,7 @@ exports.deleteSection = async(req, res) => {
             .populate({
                 path: "courseContent",
                 populate: {
-                    path: "subsections",
+                    path: "subSection",
                 },
             })
             .exec();
